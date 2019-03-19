@@ -12,7 +12,7 @@ KEY = key.Key
 TIME_SIGNATURE = meter.TimeSignature
 
 lavender_score = converter.parse(
-    '/Users/jesse/Documents/Code/AMLI/Projects/Final/pokemon_lavender.mid'
+    '/Users/jesse/Documents/Code/AMLI/Projects/Final/ff6shap.mid'
 )
 lavender_recurse = lavender_score.recurse()
 
@@ -36,11 +36,12 @@ def extract_quarter_length(q_length):
     return q_length
 
 def extract_rest(element):
-    return '&&', extract_quarter_length(element.duration.quarterLength)#, element.offset
+    return '&&', '0', extract_quarter_length(element.duration.quarterLength)#, element.offset
 
 def extract_note(element):
     return (str(element.pitch.name) +
             str(element.pitch.octave),
+            str(element.volume.velocity),
             extract_quarter_length(element.quarterLength)#, element.offset
             )
 
@@ -49,6 +50,7 @@ def extract_chord(element):
     for i in range(len(element.pitches)):
         current_chord.append(str(element.pitches[i].name) + str(element.pitches[i].octave))
     current_chord = [tuple(current_chord)]
+    current_chord.append(element.volume.velocity),
     current_chord.append(extract_quarter_length(element.duration.quarterLength))
     return current_chord
 
@@ -121,9 +123,20 @@ from numpy import array
 seq_full = []
 for i in range(len(sequences)):
     for j in range(len(sequences[i][0])):
-        seq_full.append(sequences[i][0][j][0])
+        if len(sequences[i][0]) > 2:
+            seq_full.append((*sequences[i][0][j][:-2], sequences[i][0][j][-2], sequences[i][0][j][-1]))
+        else:
+            seq_full.append((sequences[i][0][j][0], sequences[i][0][j][1], sequences[i][0][j][2]))
+
+print(seq_full)
+print()
 
 seq_full, conversions = pd.factorize(seq_full)
+
+print(seq_full)
+print()
+print(conversions)
+print()
 
 seq = []
 for i in range(len(seq_full) - 1):
@@ -132,6 +145,8 @@ for i in range(len(seq_full) - 1):
 seq = array(seq)
 X, y = seq[:, 0], seq[:, 1]
 X = X.reshape((len(X), 1, 1))
+
+print(seq)
 
 model = Sequential()
 model.add(LSTM(10, input_shape=(1,1)))
@@ -155,9 +170,16 @@ print(p_notes)
 # --------
 
 output_notes = []
+overall_offset = 0.0
 for i in range(len(p_notes)):
-    new_note = note.Note(p_notes[i])
-    new_note.offset = i
+    if p_notes[i][0] == '&&':
+        new_note = note.Rest()
+    else:
+        new_note = note.Note(p_notes[i][0])
+    new_note.volume = volume.Volume(velocity=int(p_notes[i][1]))
+    new_note.duration = duration.Duration(p_notes[i][2])
+    new_note.offset = overall_offset
+    overall_offset += new_note.duration.quarterLength
     new_note.storedInstrument = instrument.Piano()
     output_notes.append(new_note)
 
