@@ -11,12 +11,24 @@ METRONOME = tempo.MetronomeMark
 KEY = key.Key
 TIME_SIGNATURE = meter.TimeSignature
 
+TEMPOS = {(0,40):0,
+          (40,60):1,
+          (60,80):2,
+          (80,120):3,
+          (120,170):4,
+          (170,400):5}
+
 lavender_score = converter.parse(
-    '/Users/jesse/Documents/Code/AMLI/Projects/Final/ff6shap.mid'
+    '/Users/jesse/Documents/Code/AMLI/Projects/Final/celadon-city.mid'
 )
+# s = instrument.partitionByInstrument(lavender_score)
+# lavender_recurse = s.parts[0].recurse()
+# lavender_recurse.show()
+
 lavender_recurse = lavender_score.recurse()
 
-#lavender_score.show()
+for i in range(len(lavender_score.parts)):
+    lavender_score.parts[i].show()
 
 def extract_instrument(element):
     return element.instrumentName
@@ -25,7 +37,8 @@ def extract_tempo_mark(element):
     return str(element.text), str(element.number)
 
 def extract_key(element):
-    return str(element.tonic) + str(element.mode)
+    #return str(element.tonic) + str(element.mode)
+    return element.sharps
 
 def extract_time_sig(element):
     return element.ratioString
@@ -122,21 +135,33 @@ from numpy import array
 
 seq_full = []
 for i in range(len(sequences)):
-    for j in range(len(sequences[i][0])):
-        if len(sequences[i][0]) > 2:
-            seq_full.append((*sequences[i][0][j][:-2], sequences[i][0][j][-2], sequences[i][0][j][-1]))
-        else:
-            seq_full.append((sequences[i][0][j][0], sequences[i][0][j][1], sequences[i][0][j][2]))
+    current_tempo = None
+    if sequences[i][2]:
+        current_tempo = int(float(sequences[i][2][1]))
+    for r in TEMPOS.keys():
+        if current_tempo in range(r[0], r[1]):
+            current_tempo = TEMPOS[r]
+            break
 
-print(seq_full)
-print()
+    current_key = sequences[i][3]
+    current_time_sig = sequences[i][4]
+    for j in range(len(sequences[i][0])):
+        if len(sequences[i][0]) > 2:    # We have a chord to unpack
+            seq_full.append((current_tempo, current_key, current_time_sig, *sequences[i][0][j][:-2], sequences[i][0][j][-2], sequences[i][0][j][-1])) # Grab the tempo, key, time sig, all pitches, velocity, duration
+        else:   # Just a note
+            seq_full.append((current_tempo, current_key, current_time_sig, sequences[i][0][j][0], sequences[i][0][j][1], sequences[i][0][j][2]))  # Grab the tempo, key, time sig, pitch, velocity, duration
+
+# print(seq_full)
+# print()
 
 seq_full, conversions = pd.factorize(seq_full)
 
-print(seq_full)
-print()
-print(conversions)
-print()
+# print('seq_full')
+# print(seq_full)
+# print()
+# print('conversions')
+# print(conversions)
+# print()
 
 seq = []
 for i in range(len(seq_full) - 1):
@@ -146,13 +171,14 @@ seq = array(seq)
 X, y = seq[:, 0], seq[:, 1]
 X = X.reshape((len(X), 1, 1))
 
-print(seq)
+# print('seq')
+# print(seq)
 
 model = Sequential()
 model.add(LSTM(10, input_shape=(1,1)))
-model.add(Dense(1, activation='linear'))
+model.add(Dense(1, activation='linear'))    #linear -> softmax
 
-model.compile(loss='mse', optimizer='adam')
+model.compile(loss='mse', optimizer='adam') #sparse cross-entropy?
 
 model.fit(X, y, epochs=300, shuffle=False, verbose=0)
 print()
@@ -165,25 +191,33 @@ p_notes = []
 for j in range(len(y_hat)):
     p_notes.append(conversions[int(y_hat[j])])
 
-print(p_notes)
+# print('p_notes')
+# print(p_notes)
 
 # --------
 
 output_notes = []
 overall_offset = 0.0
 for i in range(len(p_notes)):
-    if p_notes[i][0] == '&&':
+    if p_notes[i][3] == '&&':
         new_note = note.Rest()
     else:
-        new_note = note.Note(p_notes[i][0])
-    new_note.volume = volume.Volume(velocity=int(p_notes[i][1]))
-    new_note.duration = duration.Duration(p_notes[i][2])
+        if isinstance(p_notes[i][3], tuple):
+            pitches = []
+            for pitch in p_notes[i][3]:
+                pitches.append(pitch)
+            new_note = chord.Chord(pitches)
+        else:
+            new_note = note.Note(p_notes[i][3])
+
+    new_note.volume = volume.Volume(velocity=int(p_notes[i][4]))
+    new_note.duration = duration.Duration(p_notes[i][5])
     new_note.offset = overall_offset
     overall_offset += new_note.duration.quarterLength
     new_note.storedInstrument = instrument.Piano()
     output_notes.append(new_note)
 
-midi_stream = stream.Stream(output_notes)
-midi_stream.write('midi', fp='peepthis.mid')
-
-peep = converter.parse('./peepthis.mid').show()
+#--- Output stuff, uncomment to save to file and check out generated music
+# midi_stream = stream.Stream(output_notes)
+# midi_stream.write('midi', fp='peepthis.mid')
+# peep = converter.parse('./peepthis.mid').show()
