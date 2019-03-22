@@ -19,7 +19,7 @@ TEMPOS = {(0,40):0,
           (170,400):5}
 
 lavender_score = converter.parse(
-    '/Users/jesse/Documents/Code/AMLI/Projects/Final/celadon-city.mid'
+    '/Users/jesse/Documents/Code/AMLI/Projects/Final/pokemon_lavender.mid'
 )
 # s = instrument.partitionByInstrument(lavender_score)
 # lavender_recurse = s.parts[0].recurse()
@@ -27,8 +27,8 @@ lavender_score = converter.parse(
 
 lavender_recurse = lavender_score.recurse()
 
-for i in range(len(lavender_score.parts)):
-    lavender_score.parts[i].show()
+# for i in range(len(lavender_score.parts)):
+#     lavender_score.parts[i].show()
 
 def extract_instrument(element):
     return element.instrumentName
@@ -116,7 +116,7 @@ for element in lavender_recurse:
 # We will have to save the last sequence... perhaps outside of the loop
 save_sequence(sequences, current_sequence, current_inst, current_metro, current_key, current_time_sig)
 
-# Look and see what we got! This would be a place to convert this data for the RNN/GAN down the road
+# Look and see what we have! This would be a place to convert this data for the RNN/GAN down the road
 print()
 for i in range(len(sequences)):
     for j in range(len(sequences[i])):
@@ -218,6 +218,6 @@ for i in range(len(p_notes)):
     output_notes.append(new_note)
 
 #--- Output stuff, uncomment to save to file and check out generated music
-# midi_stream = stream.Stream(output_notes)
-# midi_stream.write('midi', fp='peepthis.mid')
-# peep = converter.parse('./peepthis.mid').show()
+midi_stream = stream.Stream(output_notes)
+midi_stream.write('midi', fp='peepthis.mid')
+peep = converter.parse('./peepthis.mid').show()
