@@ -6,19 +6,19 @@ METRONOME = tempo.MetronomeMark
 KEY = key.Key
 TIME_SIGNATURE = meter.TimeSignature
 
-def __extract_quarter_length(q_length):
-    if isinstance(q_length, Fraction):
-        return float("{0:.3f}".format(q_length.numerator / q_length.denominator))
-    return q_length
+# def __extract_quarter_length(q_length):
+#     if isinstance(q_length, Fraction):
+#         return float("{0:.3f}".format(q_length.numerator / q_length.denominator))
+#     return q_length
 
 def __extract_rest(element):
-    return '&&', '0', __extract_quarter_length(element.duration.quarterLength)
+    return '&&', '0', element.duration.quarterLength#__extract_quarter_length(element.duration.quarterLength)
 
 def __extract_note(element):
     return (str(element.pitch.name) +
             str(element.pitch.octave),
             element.volume.velocity,
-            __extract_quarter_length(element.quarterLength))
+            element.duration.quarterLength)#__extract_quarter_length(element.quarterLength))
 
 def __extract_chord(element):
     current_chord = []
@@ -26,7 +26,7 @@ def __extract_chord(element):
         current_chord.append(str(element.pitches[i].name) + str(element.pitches[i].octave))
     current_chord = [tuple(current_chord)]
     current_chord.append(element.volume.velocity),
-    current_chord.append(__extract_quarter_length(element.duration.quarterLength))
+    current_chord.append(element.duration.quarterLength)#__extract_quarter_length(element.duration.quarterLength))
     return current_chord
 
 def __save_sequence(sequences, current_sequence, current_inst, current_metro, current_key, current_time_sig):
@@ -96,3 +96,7 @@ def get_all_sequences(lavender):
         # Save the last sequence outside of the loop
         sequences = __save_sequence(sequences, current_sequence, current_inst, current_metro, current_key, current_time_sig)
     return sequences
+
+def write_to_disk(lavender):
+    lavender.write('midi', fp='peepthis.mid')
+    peep = converter.parse('./peepthis.mid')

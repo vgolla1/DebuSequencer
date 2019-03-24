@@ -9,9 +9,10 @@ from keras.layers import Dropout
 from keras.layers import Dense
 from keras.layers import Activation
 from keras.utils import np_utils
-from random import sample
+from random import choice
+from fractions import Fraction
 
-SEQ_LENGTH = 3
+SEQ_LENGTH = 10
 
 TEMPOS = {
     (0,40):0,
@@ -63,7 +64,18 @@ def seq_to_data(sequences):
 
     return seq_full
 
-def get_X_y_vocab(data):
+def __get_seq_seed(seq):
+    # TODO: come up with a helper function to create a random note sequence if there is sequence
+    #       in og_seqs longer that SEQ_LENGTH
+    seq_choice = choice(seq)
+    while len(seq_choice) < SEQ_LENGTH:
+        seq_choice = choice(seqs)
+
+    idx = seq_choice.index(choice(seq_choice[:-SEQ_LENGTH - 1]))
+    seed = seq_choice[idx:idx+SEQ_LENGTH]
+    return seed
+
+def get_X_y_vocab_seed(data):
     """ data: a list of lists that is complete note sequences of all training pieces
         Returns:
         X:      normalized sequences of length SEQ_LENGTH to use as input to the model
@@ -72,6 +84,8 @@ def get_X_y_vocab(data):
         vocab:  the count of unique notes found throughout all training music,
                 useful for the output layer of a neural network to know
                 the number of output classes """
+    # Flatten data into a single sequence and factorize
+    # This unifies the factors (categories) across all sequences
     flat_data = []
     for i in range(len(data)):
         for j in range(len(data[i])):
@@ -95,10 +109,14 @@ def get_X_y_vocab(data):
 
     # Should we convert the seq_in to a tuple instead of a list?
     X, y = array(seq_in), array(seq_out)
-    X = X.reshape(1, len(X), len(X[0]))
-    y = y.reshape(1, len(y), 1)
+    X = X.reshape(len(X), 1, len(X[0]))
+    y = y.reshape(len(y), 1, 1)
 
-    return X, y, vocab
+    # Get the seed for generate
+    seed = array(__get_seq_seed(cat_data))
+    seed = seed.reshape(1, 1, SEQ_LENGTH)
+
+    return X, y, vocab, seed, factors
 
 def get_model(X, vocab, lstm_nodes=512, dense_nodes=256, dropout_rate=0.3):
     model = Sequential()
@@ -120,5 +138,54 @@ def get_model(X, vocab, lstm_nodes=512, dense_nodes=256, dropout_rate=0.3):
 
     return model
 
-def train_model(model, X, y, epochs=10):
-    return model.fit(X, y, epochs=epochs, shuffle=False, verbose=0)
+def __sample(preds, temperature=1.0):
+    # helper function to sample an index from a probability array
+    preds = np.asarray(preds).astype('float64')
+    preds = np.log(preds) / temperature
+    exp_preds = np.exp(preds)
+    preds = exp_preds / np.sum(exp_preds)
+    probas = np.random.multinomial(1, preds, 1)
+    return np.argmax(probas)
+
+def generate(model, og_seqs, seed, factors, gen_seq_length=100, num_voices=2):
+    gen = seed
+    debusequence = stream.Stream()
+    for i in range(num_voices):
+        voice = stream.Stream()
+        overall_offset = 0.0
+        for j in range(gen_seq_length):
+            y_hat = model.predict(gen, verbose=0)[0][0]
+            idx = __sample(y_hat)
+            y_hat = factors[idx]
+
+            # y_hat is our prediction, turn it back into a note
+            if y_hat[0] == '&&':
+                new_note = note.Rest()
+            else:
+                if isinstance(y_hat[0], tuple):
+                    pitches = []
+                    for pitch in y_hat[0]:
+                        pitches.append(pitch)
+                    new_note = chord.Chord(pitches)
+                else:
+                    new_note = note.Note(y_hat[0])
+
+            new_note.volume = volume.Volume(velocity=int(y_hat[1]))
+            dur = y_hat[5]
+            new_note.duration = duration.Duration(dur)
+            new_note.offset = overall_offset
+            overall_offset += new_note.duration.quarterLength
+            new_note.storedInstrument = instrument.Piano()
+
+            # insert the prediction into the current voice
+            voice.insert(new_note)
+
+            # Remove the first element of our generator seed and append the predicted note
+            gen = list(gen[0][0])[1:]
+            gen.append(idx)
+            gen = array(gen)
+            gen = gen.reshape(1, 1, SEQ_LENGTH)
+
+        debusequence.insert(voice)
+
+    return debusequence

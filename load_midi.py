@@ -2,9 +2,11 @@ from music21 import *
 import glob
 
 def load_lavender():
+    lavenders = []
     lavender_score = converter.parse(
-        '/Users/jesse/Documents/Code/AMLI/Projects/Final/just_chords.mid')
-    return lavender_score
+        '/Users/jesse/Documents/Code/AMLI/Projects/Final/pokemon_lavender.mid')
+    lavenders.append(lavender_score)
+    return lavenders
 
 def load_midi_files_from(dir):
     """ dir: folder name with midi files.

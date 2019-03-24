@@ -15,6 +15,30 @@ s.append(e)
 
 # insert will place a note in the stream AFTER an element (if it exists)
 # len() of a stream will include 'spaceless' elements like time sig, key sig, etc.
-s.insert(len(s) - 3, note.Note('b3')) # <-- places at current end 
+s.insert(len(s) - 3, note.Note('b3')) # <-- places at current end
 
-s.show()
+#s.show()
+
+a3 = note.Note('A3')
+a4 = note.Note('A4')
+f3 = note.Note('F3')
+f4 = note.Note('F4')
+
+a3.offset = 0.0
+a4.offset = 1.0
+f3.offset = 0.0
+f4.offset = 1.0
+
+stream1 = stream.Stream()
+stream1.insert(a3)
+stream1.insert(a4)
+
+stream2 = stream.Stream()
+stream2.insert(f3)
+stream2.insert(f4)
+
+st = stream.Stream()
+st.insert(stream1)
+st.insert(stream2)
+
+st.show()
