@@ -7,7 +7,7 @@ import pandas as pd
 
 def main():
     s = load_lavender()
-    t = load_midi_files_from('/Users/jesse/Documents/Code/AMLI/Projects/Final/Bach_Inventions')
+    t = load_midi_files_from('/Users/jesse/Documents/Code/AMLI/Projects/Final/Test_Midi')
 
     s_seq = midi_processing.get_all_sequences(s)
     s_data = model_processing.seq_to_data(s_seq)
@@ -26,7 +26,7 @@ def main():
     rnn = model_processing.get_model(X, vocab)
     rnn.fit(X, y, epochs=2, shuffle=False, verbose=0)
 
-    music = model_processing.generate(rnn, t_data, seed, factors, gen_seq_length=100, num_voices=1)
+    music = model_processing.generate(rnn, t_data, seed, factors, gen_seq_length=200, num_voices=2)
     music.show()
 
     midi_processing.write_to_disk(music)
