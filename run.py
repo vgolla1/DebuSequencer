@@ -26,7 +26,7 @@ def main():
     rnn = model_processing.get_model(X, vocab)
     rnn.fit(X, y, epochs=2, shuffle=False, verbose=0)
 
-    music = model_processing.generate(rnn, t_data, seed, factors, gen_seq_length=10, num_voices=2)
+    music = model_processing.generate(rnn, t_data, seed, factors, gen_seq_length=100, num_voices=1)
     music.show()
 
     midi_processing.write_to_disk(music)

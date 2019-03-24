@@ -12,7 +12,7 @@ from keras.utils import np_utils
 from random import choice
 from fractions import Fraction
 
-SEQ_LENGTH = 10
+SEQ_LENGTH = 50
 
 TEMPOS = {
     (0,40):0,
@@ -150,9 +150,9 @@ def __sample(preds, temperature=1.0):
     return np.argmax(probas)
 
 def generate(model, og_seqs, seed, factors, gen_seq_length=100, num_voices=2):
-    gen = seed
     debusequence = stream.Stream()
     for i in range(num_voices):
+        gen = seed
         voice = stream.Stream()
         overall_offset = 0.0
         for j in range(gen_seq_length):
