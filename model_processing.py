@@ -78,12 +78,14 @@ def __get_seq_seed(seq):
 def get_X_y_vocab_seed(data):
     """ data: a list of lists that is complete note sequences of all training pieces
         Returns:
-        X:      normalized sequences of length SEQ_LENGTH to use as input to the model
-        xprime: un-normalized sequences of lenght SEQ_LENGTH to use for predicting new music
-        y:      single value sequences representing the labels of the input data to the model
+        X:      3D numpy array of sequences of length 1 x [number of sequences as time steps] x
+                SEQ_LENGTH to use as input to the model
+        y:      3D numpy array of single value sequences representing
+                the labels of the input data to the model
         vocab:  the count of unique notes found throughout all training music,
                 useful for the output layer of a neural network to know
-                the number of output classes """
+                the number of output classes
+        seed:   A randomly selected sequence from one of the sequences in data """
     # Flatten data into a single sequence and factorize
     # This unifies the factors (categories) across all sequences
     flat_data = []
