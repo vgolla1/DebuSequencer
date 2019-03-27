@@ -65,8 +65,8 @@ def seq_to_data(sequences):
     return seq_full
 
 def __get_seq_seed(seq):
-    # TODO: come up with a helper function to create a random note sequence if there is sequence
-    #       in og_seqs longer that SEQ_LENGTH
+    # TODO: come up with a helper function to create a random note sequence if there is a sequence
+    #       in seqs longer that SEQ_LENGTH
     seq_choice = choice(seq)
     while len(seq_choice) < SEQ_LENGTH:
         seq_choice = choice(seqs)
