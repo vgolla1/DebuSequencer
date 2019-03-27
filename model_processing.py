@@ -12,7 +12,7 @@ from keras.utils import np_utils
 from random import choice
 from fractions import Fraction
 
-SEQ_LENGTH = 50
+SEQ_LENGTH = 100
 
 TEMPOS = {
     (0,40):0,
@@ -163,14 +163,13 @@ def generate(model, og_seqs, seed, factors, gen_seq_length=100, num_voices=2):
             # y_hat is our prediction, turn it back into a note
             if y_hat[0] == '&&':
                 new_note = note.Rest()
+            elif isinstance(y_hat[0], tuple):
+                pitches = []
+                for pitch in y_hat[0]:
+                    pitches.append(pitch)
+                new_note = chord.Chord(pitches)
             else:
-                if isinstance(y_hat[0], tuple):
-                    pitches = []
-                    for pitch in y_hat[0]:
-                        pitches.append(pitch)
-                    new_note = chord.Chord(pitches)
-                else:
-                    new_note = note.Note(y_hat[0])
+                new_note = note.Note(y_hat[0])
 
             new_note.volume = volume.Volume(velocity=int(y_hat[1]))
             dur = y_hat[5]
