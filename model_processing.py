@@ -50,14 +50,15 @@ def seq_to_data(sequences):
             velocity = pitch_data[j][1]
             duration = pitch_data[j][2]
 
-            # Combine pitches, tempo, key, time sig, velocity, duration into a single data point
+            # Combine pitches, tempo, key, time sig, velocity, duration, inst into a single data point
             data_point = (
-                pitches,
-                current_tempo,
-                current_key,
-                current_time_sig,
-                velocity,
-                duration
+                pitches,            # [0]
+                current_tempo,      # [1]
+                current_key,        # [2]
+                current_time_sig,   # [3]
+                velocity,           # [4]
+                duration,           # [5]
+                current_inst        # [6]
             )
 
             seq_full.append(data_point)
@@ -176,7 +177,7 @@ def generate(model, og_seqs, seed, factors, gen_seq_length=100, num_voices=2):
             new_note.duration = duration.Duration(dur)
             new_note.offset = overall_offset
             overall_offset += new_note.duration.quarterLength
-            new_note.storedInstrument = instrument.Piano()
+            new_note.storedInstrument = y_hat[6]
 
             # insert the prediction into the current voice
             voice.insert(new_note)
