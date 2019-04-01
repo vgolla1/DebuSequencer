@@ -6,19 +6,17 @@ METRONOME = tempo.MetronomeMark
 KEY = key.Key
 TIME_SIGNATURE = meter.TimeSignature
 
-# def __extract_quarter_length(q_length):
-#     if isinstance(q_length, Fraction):
-#         return float("{0:.3f}".format(q_length.numerator / q_length.denominator))
-#     return q_length
-
 def __extract_rest(element):
-    return '&&', '0', element.duration.quarterLength#__extract_quarter_length(element.duration.quarterLength)
+    dur = element.duration.quarterLength
+    if dur > 4.0:
+        dur = 4.0
+    return '&&', '0', dur
 
 def __extract_note(element):
     return (str(element.pitch.name) +
             str(element.pitch.octave),
             element.volume.velocity,
-            element.duration.quarterLength)#__extract_quarter_length(element.quarterLength))
+            element.duration.quarterLength)
 
 def __extract_chord(element):
     current_chord = []
